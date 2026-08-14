@@ -1,0 +1,307 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Google+Sans:ital%2Copsz%2Cwght@0%2C17..18%2C400..700%3B1%2C17..18%2C400..700&display=swap";
+@import "tailwindcss";
+
+@font-face {
+  font-family: "TrajanPro";
+  src: url("/fonts/TrajanPro-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TrajanPro";
+  src: url("/fonts/TrajanPro-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design Tokens — Light Theme ───────────────────────────────── */
+:root {
+  /* Color */
+  --bg:       #F7F4EF;   /* warm parchment */
+  --ink:      #111110;   /* near-black */
+  --accent:   #1A4D8F;   /* confident navy — institutional, not corporate */
+  --accent2:  #C4622D;   /* warm terracotta — secondary punch */
+  --muted:    #8A8580;   /* secondary text / hairlines */
+  --surface:  #EDEBE6;   /* cards / inset blocks */
+  --surface2: #FFFFFF;   /* pure white for high-contrast cards */
+
+  /* Typography — Josefin Sans for everything, DM Mono for data */
+  --font-josefin: var(--font-josefin-var);
+  --font-google-sans: "Google Sans", "Product Sans", Arial, system-ui, sans-serif;
+  --font-mono:    var(--font-mono-var);
+  --font-trajan:  var(--font-trajan-var);
+  /* Aliases used across components */
+  --font-display: var(--font-josefin-var);
+  --font-body:    var(--font-josefin-var);
+
+  /* Motion */
+  --ease:     cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.4s;
+  --dur-slow: 1.2s;
+
+  /* Spacing rhythm */
+  --section-gap: clamp(6rem, 12vw, 12rem);
+
+  /* Aliases for Tailwind v4 @theme */
+  --background: var(--bg);
+  --foreground:  var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground:  var(--foreground);
+  --color-bg:          var(--bg);
+  --color-ink:         var(--ink);
+  --color-accent:      var(--accent);
+  --color-accent2:     var(--accent2);
+  --color-muted:       var(--muted);
+  --color-surface:     var(--surface);
+  --font-sans:         var(--font-body);
+  --font-mono:         var(--font-mono-var);
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  scroll-behavior: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ─── Typography Scale ───────────────────────────────────────────── */
+.t-hero {
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 11vw, 10rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.t-display {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.t-heading {
+  font-family: var(--font-body);
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.t-body {
+  font-family: var(--font-body);
+  font-size: clamp(0.8rem, 0.95vw, 0.9rem);
+  line-height: 1.7;
+}
+
+.t-caption {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ─── Lenis ──────────────────────────────────────────────────────── */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+
+/* ─── Page loader ────────────────────────────────────────────────── */
+.loader {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+.loader__count {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 12vw, 10rem);
+  letter-spacing: -0.04em;
+  color: var(--bg);
+  line-height: 1;
+}
+.loader[data-done="true"] { pointer-events: none; }
+
+/* ─── Marquee ────────────────────────────────────────────────────── */
+.marquee-track {
+  display: flex;
+  gap: 3rem;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.hero-wash {
+  background:
+    linear-gradient(90deg, rgba(135, 111, 91, 0.95) 0%, rgba(135, 111, 91, 0.88) 34%, rgba(135, 111, 91, 0.58) 58%, rgba(135, 111, 91, 0.12) 78%, rgba(135, 111, 91, 0) 100%),
+    linear-gradient(180deg, rgba(42, 29, 18, 0.04) 0%, rgba(42, 29, 18, 0.18) 100%);
+}
+
+.hero-title-wrap {
+  overflow: hidden;
+  padding-top: 0.12em;
+  margin-top: -0.12em;
+}
+
+.hero-title {
+  margin: 0;
+  font-family: var(--font-josefin);
+  font-size: clamp(2.5rem, 6vw, 6.5rem);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.hero-surname {
+  margin: 0;
+  display: block;
+  font-family: var(--font-josefin);
+  font-size: clamp(1rem, 2vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.hero-surname-char {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.hero-role-label {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-josefin);
+  font-size: clamp(0.55rem, 0.7vw, 0.72rem);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.hero-role-value {
+  margin: 0;
+  font-family: "TrajanPro", serif;
+  font-size: clamp(0.62rem, 0.85vw, 0.85rem);
+  line-height: 1.25;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────── */
+.overflow-clip { overflow: hidden; }
+.split-line { overflow: hidden; display: block; }
+
+/* ─── Hairlines ──────────────────────────────────────────────────── */
+.rule { border-color: #C8C4BC; }
+
+/* ─── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .loader { display: none !important; }
+}
+
+@media (max-width: 1024px) {
+  .hero-wash {
+    background:
+      linear-gradient(180deg, rgba(135, 111, 91, 0.18) 0%, rgba(135, 111, 91, 0.44) 38%, rgba(135, 111, 91, 0.9) 100%),
+      linear-gradient(90deg, rgba(135, 111, 91, 0.74) 0%, rgba(135, 111, 91, 0.18) 58%, rgba(135, 111, 91, 0) 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(3rem, 16vw, 5.35rem);
+    letter-spacing: 0.02em;
+  }
+
+  .hero-surname {
+    padding-left: 0.04em;
+    font-size: clamp(0.92rem, 3.5vw, 1.28rem);
+    letter-spacing: 0.02em;
+  }
+
+  .hero-role-value {
+    font-size: 0.76rem;
+  }
+}
+
+/* ─── 4K / Ultra-wide (2560px+) ─────────────────────────────────── */
+@media (min-width: 2560px) {
+  :root {
+    --section-gap: clamp(12rem, 10vw, 18rem);
+  }
+
+  .t-body    { font-size: clamp(1rem, 0.9vw, 1.4rem); }
+  .t-caption { font-size: clamp(0.85rem, 0.6vw, 1rem); letter-spacing: 0.18em; }
+  .t-heading { font-size: clamp(2.2rem, 2.2vw, 3.6rem); }
+
+  /* Wider containers */
+  .max-w-7xl        { max-width: min(90vw, 2200px) !important; }
+  .max-w-screen-2xl { max-width: min(92vw, 2400px) !important; }
+
+  /* Hero name SVG — allow wider on 4K */
+  .hero-name-wrap { width: clamp(46rem, 36vw, 72rem) !important; }
+
+  /* Institution grid rows */
+  .institution-grid { grid-template-rows: 220px 300px 220px !important; }
+
+  /* Logo sizes */
+  .logo-cell-img        { max-height: 80px  !important; max-width: 260px !important; }
+  .logo-cell-img-center { max-height: 96px  !important; max-width: 420px !important; }
+
+  /* Card widths for scroll tracks */
+  .reel-card    { width: clamp(320px, 20vw, 460px) !important; }
+  .linkedin-card { width: clamp(360px, 22vw, 520px) !important; }
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--muted); }
+
+/* ─── Focus ──────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────── */
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
