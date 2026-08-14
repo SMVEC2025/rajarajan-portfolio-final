@@ -7,9 +7,14 @@ import { gsap, ScrollTrigger } from "@/app/lib/gsap";
    Wheel events arrive in bursts (a trackpad flick fires dozens), so the first
    event past a small threshold triggers the move and the rest are swallowed
    until the burst stops AND the animation has finished. */
-const SNAP_DURATION = 0.7;   // seconds per section move
+const SNAP_DURATION = 0.9;   // seconds per section move
+/* Glide, not snap: accelerates out of the old section and decelerates into the
+   new one. easeOutCubic starts at full speed, which is what reads as abrupt —
+   this eases both ends symmetrically. No overshoot, so it never feels loose. */
+const easeInOutCubic = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const WHEEL_THRESHOLD = 8;   // ignore sub-pixel/inertia noise
-const GESTURE_GAP = 140;     // ms of quiet that ends a burst
+const GESTURE_GAP = 170;     // ms of quiet that ends a burst
 const SWIPE_MIN = 45;        // px of travel before a touch counts
 const MIN_SCROLLER_SLACK = 48; // px an inner box must scroll to own a gesture
 
@@ -125,7 +130,7 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
 
       lenis.scrollTo(targets[index], {
         duration: SNAP_DURATION,
-        easing: (t: number) => 1 - Math.pow(1 - t, 3), // easeOutCubic
+        easing: easeInOutCubic,
         lock: true,
         onComplete: () => { animating = false; },
       });
@@ -216,10 +221,15 @@ export default function SmoothScrollProvider({ children }: { children: React.Rea
       e.preventDefault();
       if (animating) return;
 
-      if (e.key === "Home") { index = 0; lenis.scrollTo(targets[0], { duration: SNAP_DURATION }); return; }
+      // Home/End cross the whole page — give the glide room to breathe.
+      if (e.key === "Home") {
+        index = 0;
+        lenis.scrollTo(targets[0], { duration: SNAP_DURATION * 1.6, easing: easeInOutCubic });
+        return;
+      }
       if (e.key === "End") {
         index = targets.length - 1;
-        lenis.scrollTo(targets[index], { duration: SNAP_DURATION });
+        lenis.scrollTo(targets[index], { duration: SNAP_DURATION * 1.6, easing: easeInOutCubic });
         return;
       }
       goTo(down ? 1 : -1);

@@ -8,58 +8,58 @@ import { useReducedMotion } from "@/app/hooks/useReducedMotion";
 const POSTS = [
   {
     id: 1,
-    image: "/images/hero-speaking.jpg",
-    tag: "Leadership",
-    title: "Institutional Leadership",
+    image: "https://media.licdn.com/dms/image/v2/D5622AQHET38risBA7w/feedshare-image-high-res/B56Z.JUXGQJoAU-/0/1784715244478?e=1788393600&v=beta&t=aGvtCZDYOgnMQo2PqHDaEeSYFkfv1zZQMMUGceonEMw",
+    tag: "IEEE TEMS",
+    title: "IEEE TEMS Horizon 75",
     subtitle: "Treasurer · SMV Group",
-    text: "Education is not a service we deliver — it is a transformation we enable. Proud to witness 20,000+ students shape their futures through our institutions this year.",
-    likes: 1284,
-    comments: 96,
-    time: "2d",
+    text: "Honoured to be a part of IEEE TEMS HORIZON 75 — a remarkable event celebrating 75 years of the IEEE Technology and Engineering Management Society (TEMS), hosted at Sri Manakula Vinayagar Engineering College. Truly delighted to have shared the stage with distinguished leaders and eminent academicians.",
+    likes: 108,
+    comments: 6,
+    time: "3w",
   },
   {
     id: 2,
-    image: "/images/DSC09809.JPG.jpeg",
-    tag: "EdTech",
-    title: "AI-Powered Campus",
-    subtitle: "CEO · Bloombyte",
-    text: "Inaugurated the new AI-powered campus management system at Takshashila University. Technology should make administration invisible so educators can focus on what matters.",
-    likes: 874,
-    comments: 62,
-    time: "5d",
+    image: "https://media.licdn.com/dms/image/v2/D5622AQF10XPa7HrC2g/feedshare-image-high-res/B56Z6MnmtbJQAU-/0/1780475653478?e=1788393600&v=beta&t=x289tPJpxH20-KfEF_7tInnvS4vgEBVAf1YUFJLpSn8",
+    tag: "Placements",
+    title: "Xultation 2026",
+    subtitle: "SMVEC · School of Arts and Science",
+    text: "Grateful to have been a part of Xultation 2026, a remarkable placement initiative where 400+ students were issued offer letters, marking a significant milestone in their career journeys. Proud to contribute to an initiative that bridges academics and professional success.",
+    likes: 83,
+    comments: 3,
+    time: "2mo",
   },
   {
     id: 3,
-    image: "/images/hero-desk.jpg",
-    tag: "Healthcare",
-    title: "Healthcare Impact",
-    subtitle: "SMV Group · Teaching Hospital",
-    text: "Reached a milestone: 40 lakh free treatments delivered through our 1,180-bed teaching hospital. Healthcare is a right, not a privilege — and we intend to prove that every year.",
-    likes: 2310,
-    comments: 184,
-    time: "1w",
+    image: "https://media.licdn.com/dms/image/v2/D5622AQGeu36p4jataA/feedshare-image-high-res/B56Z5O.ODaKQAY-/0/1779441394630?e=1788393600&v=beta&t=glH8cZqAOIwi_pjvKE874QgIEo6EFgy2z68W4RQSATU",
+    tag: "Innovation",
+    title: "Sri Sairam Techno Incubator",
+    subtitle: "Treasurer · SMVET",
+    text: "Innovation grows stronger when institutions learn from successful ecosystems. A great experience visiting the Sri Sairam Techno Incubator Foundation with the SMV VisionX team — understanding their approach to entrepreneurship, incubation, and innovation-driven initiatives, and building stronger industry–academia connections.",
+    likes: 111,
+    comments: 1,
+    time: "2mo",
   },
   {
     id: 4,
-    image: "/images/hero-standing-1.jpg",
-    tag: "Innovation",
-    title: "Scaling EdTech",
-    subtitle: "CEO · Bloombyte",
-    text: "Bloombyte's cloud-native platform now powers campus operations for 12 institutions across India. Scaling systems so humans can focus on relationships, not paperwork.",
-    likes: 653,
-    comments: 47,
-    time: "2w",
+    image: "https://media.licdn.com/dms/image/v2/D5622AQHL3c9IPe8a5g/feedshare-shrink_800/B56Z5ELjKZGgAc-/0/1779260339110?e=1788393600&v=beta&t=yS761_AUZ7hxdXQALKW8cnBM9Rf1N2PGgORpiKQ1b7Y",
+    tag: "Mindset",
+    title: "Careers Don't Stand Still",
+    subtitle: "Treasurer · SMV Group",
+    text: "Progress doesn't happen by pause. It comes from consistent effort, clarity of purpose, and a willingness to move forward — every day. Growth is a choice. Choose it daily.",
+    likes: 35,
+    comments: 0,
+    time: "2mo",
   },
   {
     id: 5,
-    image: "/images/hero-standing-2.jpg",
-    tag: "Vision",
-    title: "Academic Excellence",
-    subtitle: "Pro Chancellor · Takshashila",
-    text: "True excellence in education is measured not by rankings but by how many lives it transforms. We are building institutions that will outlast all of us.",
-    likes: 987,
-    comments: 73,
-    time: "3w",
+    image: "https://media.licdn.com/dms/image/v2/D5622AQENW1Cmzqimqw/feedshare-shrink_800/B56Z4mJdH4H8Ac-/0/1778756473685?e=1788393600&v=beta&t=vC5AaO9hv1RBC8XGwjkyGVN5lpGpeNLH3ZxO2gZHBMU",
+    tag: "AI",
+    title: "AI Is Already Here",
+    subtitle: "Treasurer · SMV Group",
+    text: "We are witnessing the biggest shift in learning since the invention of the internet. Earlier, people searched for answers. Now, people interact with intelligence. The smartest skill today is not just knowing information — it's knowing how to use AI effectively. The future belongs to those who adapt fast.",
+    likes: 0,
+    comments: 0,
+    time: "2mo",
   },
 ];
 
@@ -127,7 +127,7 @@ function PostCard({ post, index }: { post: typeof POSTS[0]; index: number }) {
             color: "rgba(255,255,255,0.45)",
           }}
         >
-          0{index + 1}
+          {String(index + 1).padStart(2, "0")}
         </span>
         {/* tag */}
         <span
@@ -327,7 +327,7 @@ export default function LinkedInFeed() {
 
           <div className="flex items-center gap-6">
             <a
-              href="https://www.linkedin.com/in/rajarajandhanasekaran"
+              href="https://www.linkedin.com/in/rajarajan-dhanasekaran-6ba5009a"
               target="_blank"
               rel="noopener noreferrer"
               className="t-caption"

@@ -59,6 +59,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${josefinSans.variable} ${dmMono.variable} ${trajanPro.variable}`}
+      suppressHydrationWarning
     >
       <body>
         <SmoothScrollProvider>

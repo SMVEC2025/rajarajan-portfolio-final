@@ -345,18 +345,20 @@ $rdv2-ease: cubic-bezier(0.22, 1, 0.36, 1);
   &__portrait-img {
     opacity: 0;
     transform: translateY(18px);
-    transition: opacity 0.85s $rdv2-ease, transform 0.85s $rdv2-ease;
+    transition: opacity 0.5s $rdv2-ease, transform 0.5s $rdv2-ease;
   }
 
+  /* First element starts at 0s — no leading pause before the reveal begins.
+     The rest follow in a tight stagger so the hero resolves quickly. */
   &.is-ready {
-    .rdv2-hero__eyebrow { opacity: 1; transform: none; transition-delay: 0.05s; }
-    .rdv2-hero__name-line { opacity: 1; transform: none; transition-delay: 0.14s; }
-    .rdv2-hero__name-line + .rdv2-hero__name-line { transition-delay: 0.22s; }
-    .rdv2-hero__role { opacity: 1; transform: none; transition-delay: 0.3s; }
-    .rdv2-hero__statement { opacity: 1; transform: none; transition-delay: 0.38s; }
-    .rdv2-hero__cta { opacity: 1; transform: none; transition-delay: 0.46s; }
-    .rdv2-hero__portrait-img { opacity: 1; transform: none; transition-delay: 0.2s; }
-    .rdv2-hero__footer { opacity: 1; transform: none; transition-delay: 0.54s; }
+    .rdv2-hero__eyebrow { opacity: 1; transform: none; transition-delay: 0s; }
+    .rdv2-hero__name-line { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .rdv2-hero__name-line + .rdv2-hero__name-line { transition-delay: 0.1s; }
+    .rdv2-hero__role { opacity: 1; transform: none; transition-delay: 0.15s; }
+    .rdv2-hero__statement { opacity: 1; transform: none; transition-delay: 0.2s; }
+    .rdv2-hero__cta { opacity: 1; transform: none; transition-delay: 0.25s; }
+    .rdv2-hero__portrait-img { opacity: 1; transform: none; transition-delay: 0.08s; }
+    .rdv2-hero__footer { opacity: 1; transform: none; transition-delay: 0.3s; }
   }
 
   @media (prefers-reduced-motion: reduce) {

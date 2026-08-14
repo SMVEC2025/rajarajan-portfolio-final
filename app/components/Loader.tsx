@@ -30,8 +30,8 @@ export default function Loader({ onComplete }: LoaderProps) {
 
     tl.to(obj, {
       val: 100,
-      duration: 1.4,
-      ease: "power2.inOut",
+      duration: 0.7,
+      ease: "power2.out",
       onUpdate() {
         if (countRef.current) {
           countRef.current.textContent = Math.round(obj.val).toString();
@@ -39,9 +39,8 @@ export default function Loader({ onComplete }: LoaderProps) {
       },
     }).to(loaderRef.current, {
       yPercent: -100,
-      duration: 0.9,
+      duration: 0.6,
       ease: "power3.inOut",
-      delay: 0.1,
     });
   }, [reduced, onComplete]);
 

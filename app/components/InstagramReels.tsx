@@ -5,14 +5,14 @@ import { gsap, ScrollTrigger } from "@/app/lib/gsap";
 import { useReducedMotion } from "@/app/hooks/useReducedMotion";
 
 const REELS = [
-  { src: "/images/reels/reels.mp4", poster: "/images/hero-speaking.jpg", title: "Institutional Leadership", subtitle: "Treasurer / SMV Group" },
-  { src: "/images/reels/reels.mp4", poster: "/images/hero-standing-1.jpg", title: "Academic Vision", subtitle: "Pro Chancellor / Takshashila" },
-  { src: "/images/reels/reels.mp4", poster: "/images/hero-standing-2.jpg", title: "EdTech Innovation", subtitle: "CEO / Bloombyte" },
-  { src: "/images/reels/reels.mp4", poster: "/images/DSC04928.JPG.jpeg", title: "Campus at Scale", subtitle: "20,000+ Students" },
-  { src: "/images/reels/reels.mp4", poster: "/images/MKA08259.JPG.jpeg", title: "Healthcare Impact", subtitle: "40L+ Free Treatments" },
+  { src: "/images/reels/reels.mp4", title: "Institutional Leadership", subtitle: "Treasurer / SMV Group" },
+  { src: "/images/reels/reels.mp4", title: "Academic Vision", subtitle: "Pro Chancellor / Takshashila" },
+  { src: "/images/reels/reels.mp4", title: "EdTech Innovation", subtitle: "CEO / Bloombyte" },
+  { src: "/images/reels/reels.mp4", title: "Campus at Scale", subtitle: "20,000+ Students" },
+  { src: "/images/reels/reels.mp4", title: "Healthcare Impact", subtitle: "40L+ Free Treatments" },
 ];
 
-function ReelCard({ src, poster, title, subtitle, index }: { src: string; poster: string; title: string; subtitle: string; index: number }) {
+function ReelCard({ src, title, subtitle, index }: { src: string; title: string; subtitle: string; index: number }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -42,11 +42,10 @@ function ReelCard({ src, poster, title, subtitle, index }: { src: string; poster
       <video
         ref={videoRef}
         src={src}
-        poster={poster}
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="auto"
         style={{
           position: "absolute",
           inset: 0,
