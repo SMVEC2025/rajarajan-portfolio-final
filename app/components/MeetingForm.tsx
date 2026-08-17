@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { gsap } from "@/app/lib/gsap";
@@ -105,92 +105,155 @@ function FieldInput({
   );
 }
 
-const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
-const MINUTES = ["00", "15", "30", "45"];
-const PERIODS = ["AM", "PM"];
+/* Half-hour slots from 08:00 to 19:30, as "HH:MM" 24h values paired with the
+   12h label shown in the list. */
+const TIME_SLOTS = (() => {
+  const slots: { value: string; label: string }[] = [];
+  for (let h = 8; h <= 19; h++) {
+    for (const m of ["00", "30"]) {
+      const period = h >= 12 ? "PM" : "AM";
+      const h12 = h % 12 || 12;
+      slots.push({
+        value: `${String(h).padStart(2, "0")}:${m}`,
+        label: `${h12}:${m} ${period}`,
+      });
+    }
+  }
+  return slots;
+})();
 
-interface TimePickerProps {
-  value: string;
-  onChange: (val: string) => void;
-  focused: boolean;
-  onFocus: () => void;
-  onBlur: () => void;
+interface DateTimePickerProps {
+  date: Date | null;
+  time: string;
+  error?: boolean;
+  onChange: (date: Date | null, time: string) => void;
 }
 
-function TimePicker({ value, onChange, focused, onFocus, onBlur }: TimePickerProps) {
+/* Single field holding both date and time. Opening it reveals one popup:
+   the calendar on the left, the slot list on the right, and a footer showing
+   the running selection with Cancel / Schedule. Values are only committed to
+   the form when Schedule is pressed, so Cancel can restore the previous pair. */
+function DateTimePicker({ date, time, error, onChange }: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState<Date | null>(date);
+  const [draftTime, setDraftTime] = useState(time);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const parsed = useMemo(() => {
-    if (!value) return { h: "09", m: "00", p: "AM" };
-    const [hRaw, mRaw] = value.split(":");
-    const h24 = parseInt(hRaw, 10);
-    const p = h24 >= 12 ? "PM" : "AM";
-    const h12 = h24 % 12 || 12;
-    return { h: String(h12).padStart(2, "0"), m: mRaw?.slice(0, 2) || "00", p };
-  }, [value]);
+  // Seed the draft at open time rather than in an effect, so an abandoned edit
+  // never leaks into the next session and no extra render is queued.
+  const openPicker = () => {
+    setDraftDate(date);
+    setDraftTime(time);
+    setOpen(true);
+  };
 
-  const commit = useCallback((h: string, m: string, p: string) => {
-    let h24 = parseInt(h, 10);
-    if (p === "PM" && h24 !== 12) h24 += 12;
-    if (p === "AM" && h24 === 12) h24 = 0;
-    onChange(`${String(h24).padStart(2, "0")}:${m}`);
-  }, [onChange]);
+  // Bring the chosen slot into view — a late-afternoon pick otherwise sits
+  // below the fold and the list looks untouched.
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const active = listRef.current.querySelector<HTMLElement>("[data-active]");
+    if (active) active.scrollIntoView({ block: "center" });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        onBlur();
-      }
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [open, onBlur]);
+  }, [open]);
+
+  const fmtDate = (d: Date | null) =>
+    d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  const fmtTime = (t: string) => TIME_SLOTS.find(s => s.value === t)?.label ?? "";
+
+  const summary = date && time
+    ? `${fmtDate(date)} · ${fmtTime(time)}`
+    : date
+      ? fmtDate(date)
+      : "";
+
+  const draftSummary = draftDate && draftTime
+    ? `${fmtDate(draftDate)} · ${fmtTime(draftTime)}`
+    : draftDate
+      ? fmtDate(draftDate)
+      : "No date selected";
 
   return (
     <div ref={wrapRef} style={{ position: "relative" }}>
       <button
         type="button"
-        onClick={() => {
-          setOpen(o => !o);
-          if (!open) onFocus();
-          else onBlur();
-        }}
+        onClick={() => (open ? setOpen(false) : openPicker())}
         style={{
-          ...inputStyle(false, focused || open),
+          ...inputStyle(!!error, open),
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           cursor: "pointer",
           textAlign: "left",
           height: "52px",
-          color: value ? MF_NAVY : "#bbb",
+          color: summary ? MF_NAVY : "#bbb",
         }}
       >
-        <span style={{ fontSize: "0.85rem" }}>{value ? `${parsed.h}:${parsed.m} ${parsed.p}` : "Select a time"}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0, transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-          <path d="M6 9l6 6 6-6" />
+        <span style={{ fontSize: "0.85rem" }}>{summary || "Select date & time"}</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.45, flexShrink: 0 }}>
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
       </button>
 
       {open && (
-        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, right: 0, background: "#FEFCF9", border: "1px solid #E0DDD8", borderRadius: "6px", boxShadow: "0 16px 48px rgba(28,49,99,0.14)", zIndex: 10000, padding: "12px", display: "flex", gap: "6px" }}>
-          {[
-            ["HR", HOURS, parsed.h, (v: string) => commit(v, parsed.m, parsed.p)],
-            ["MIN", MINUTES, parsed.m, (v: string) => commit(parsed.h, v, parsed.p)],
-            ["AM/PM", PERIODS, parsed.p, (v: string) => commit(parsed.h, parsed.m, v)],
-          ].map(([title, items, active, handler]) => (
-            <div key={title as string} style={{ flex: 1, display: "flex", flexDirection: "column", gap: "3px", maxHeight: "180px", overflowY: "auto" }}>
-              <span style={{ fontSize: "0.55rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#999", fontWeight: 600, textAlign: "center", padding: "2px 0 6px", fontFamily: "inherit" }}>{title as string}</span>
-              {(items as string[]).map(item => (
-                <button key={item} type="button" onClick={() => (handler as (v: string) => void)(item)} style={{ padding: "7px 0", borderRadius: "8px", border: "none", background: active === item ? MF_GOLD : "transparent", color: active === item ? "#fff" : MF_NAVY, fontFamily: "inherit", fontSize: "0.82rem", cursor: "pointer", transition: "all 0.15s", fontWeight: active === item ? 600 : 400 }}>
-                  {item}
-                </button>
-              ))}
+        <div className="rj-dtp-pop">
+          <div className="rj-dtp-cols">
+            {/* Calendar — inline, styling inherited from the .rj-dp rules */}
+            <div className={`rj-dp rj-dtp-cal${error ? " dp-error" : ""}`}>
+              <DatePicker
+                selected={draftDate}
+                onChange={(d: Date | null) => setDraftDate(d)}
+                minDate={new Date()}
+                inline
+              />
             </div>
-          ))}
+
+            {/* Time slots */}
+            <div className="rj-dtp-times" ref={listRef}>
+              {TIME_SLOTS.map(slot => {
+                const active = draftTime === slot.value;
+                return (
+                  <button
+                    key={slot.value}
+                    type="button"
+                    data-active={active || undefined}
+                    className={`rj-dtp-slot${active ? " is-active" : ""}`}
+                    onClick={() => setDraftTime(slot.value)}
+                  >
+                    {slot.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Footer: cancel / running selection / confirm */}
+          <div className="rj-dtp-foot">
+            <button type="button" className="rj-dtp-cancel" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+            <span className="rj-dtp-summary">{draftSummary}</span>
+            <button
+              type="button"
+              className="rj-dtp-confirm"
+              disabled={!draftDate || !draftTime}
+              onClick={() => {
+                onChange(draftDate, draftTime);
+                setOpen(false);
+              }}
+            >
+              Schedule
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -348,21 +411,110 @@ export default function MeetingForm({ open, onClose }: Props) {
   return (
     <>
       <style>{`
-        .rj-dp .react-datepicker { font-family: inherit; border: 1px solid #E0DDD8; border-radius: 6px; box-shadow: 0 16px 48px rgba(28,49,99,0.14); overflow: hidden; background: #FEFCF9; }
-        .rj-dp .react-datepicker__header { background: ${MF_NAVY}; border-bottom: none; padding: 14px 0 10px; }
-        .rj-dp .react-datepicker__current-month, .rj-dp .react-datepicker__day-name { color: #fff; font-size: 0.68rem; letter-spacing: 0.07em; }
-        .rj-dp .react-datepicker__navigation-icon::before { border-color: rgba(255,255,255,0.7); }
-        .rj-dp .react-datepicker__day { font-size: 0.73rem; border-radius: 8px; color: #333; transition: background 0.13s; }
-        .rj-dp .react-datepicker__day:hover { background: #EDEBE6; color: #111; }
-        .rj-dp .react-datepicker__day--selected { background: ${MF_GOLD} !important; color: #fff !important; border-radius: 8px; font-weight: 600; }
-        .rj-dp .react-datepicker__day--keyboard-selected { background: #EFE7D8; color: ${MF_NAVY}; }
-        .rj-dp .react-datepicker__day--disabled { color: #ccc !important; }
+        /* --- Calendar popup: light card, month label left, chevrons right --- */
+        .rj-dp .react-datepicker { font-family: inherit; border: 1px solid #EAE7E1; border-radius: 16px; box-shadow: 0 18px 50px rgba(28,49,99,0.16); overflow: hidden; background: #fff; padding: 6px 6px 0; }
+        .rj-dp .react-datepicker__header { background: #fff; border-bottom: none; padding: 14px 12px 6px; }
+        .rj-dp .react-datepicker__current-month {
+          color: ${MF_NAVY}; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.08em;
+          text-transform: uppercase; text-align: left; padding-left: 6px;
+        }
+        /* Chevrons sit together at the top-right, clear of the month label. */
+        /* Nav buttons. The library ships text-indent:-999em + overflow:hidden
+           to hide the button label, so the chevron must stay absolutely
+           positioned — taking it out of flow makes text-indent drag it away
+           and overflow clip it. Keep abs positioning, zero out the offsets,
+           and centre the ::before on the button box directly. */
+        .rj-dp .react-datepicker__navigation {
+          top: 14px; width: 26px; height: 26px; border-radius: 50%;
+          padding: 0; transition: background 0.15s;
+        }
+        .rj-dp .react-datepicker__navigation:hover { background: #F2F0EC; }
+        .rj-dp .react-datepicker__navigation--previous { left: auto; right: 44px; }
+        .rj-dp .react-datepicker__navigation--next { right: 12px; }
+        .rj-dp .react-datepicker__navigation-icon { position: static; top: 0; left: 0; right: 0; width: 0; font-size: 0; }
+        /* 6px box, 1.5px borders → true centre is 50% minus half the box (3px),
+           then minus ~1px to compensate for the rotated square's visual mass. */
+        .rj-dp .react-datepicker__navigation-icon::before {
+          border-color: #8A8A8A; border-width: 1.5px 1.5px 0 0;
+          width: 6px; height: 6px; position: absolute; margin: 0;
+          top: 50%; left: 50%; right: auto;
+        }
+        .rj-dp .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before { transform: translate(-40%, -50%) rotate(-135deg); }
+        .rj-dp .react-datepicker__navigation--next .react-datepicker__navigation-icon::before { transform: translate(-60%, -50%) rotate(45deg); }
+        .rj-dp .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before { border-color: ${MF_NAVY}; }
+
+        /* Weekday initials — muted, wide-tracked */
+        .rj-dp .react-datepicker__day-names { margin-top: 8px; padding: 0 4px; }
+        .rj-dp .react-datepicker__day-name { color: #A8A6A1; font-size: 0.64rem; font-weight: 500; letter-spacing: 0.04em; width: 2rem; line-height: 1.8rem; margin: 0.14rem; }
+
+        /* Month label repeated above the grid, in gold */
+        .rj-dp .react-datepicker__month { margin: 4px 4px 8px; }
+        .rj-dp .react-datepicker__month-container { padding-bottom: 4px; }
+
+        /* Day cells: circular, generous hit area */
+        .rj-dp .react-datepicker__day { font-size: 0.76rem; color: #3A3A3A; width: 2rem; height: 2rem; line-height: 2rem; margin: 0.14rem; border-radius: 50%; transition: background 0.15s, color 0.15s; }
+        .rj-dp .react-datepicker__day:hover { background: #F2F0EC; color: #111; border-radius: 50%; }
+        .rj-dp .react-datepicker__day--selected { background: ${MF_GOLD} !important; color: #fff !important; border-radius: 50% !important; font-weight: 600; }
+        .rj-dp .react-datepicker__day--selected:hover { background: ${MF_GOLD} !important; }
+        .rj-dp .react-datepicker__day--keyboard-selected { background: transparent; color: ${MF_NAVY}; border-radius: 50%; }
+        .rj-dp .react-datepicker__day--today { font-weight: 600; color: ${MF_NAVY}; }
+        .rj-dp .react-datepicker__day--outside-month { color: #D6D4CF; }
+        .rj-dp .react-datepicker__day--disabled { color: #D6D4CF !important; }
+        .rj-dp .react-datepicker__day--disabled:hover { background: transparent !important; }
+        .rj-dp .react-datepicker__triangle { display: none; }
         .rj-dp .react-datepicker__input-container input { width: 100%; padding: 15px 18px; height: 52px; font-family: inherit; font-size: 0.9rem; color: ${MF_NAVY}; background: ${MF_FIELD}; border: 1px solid ${MF_LINE}; border-radius: 4px; outline: none; cursor: pointer; box-sizing: border-box; transition: all 0.18s ease; line-height: 1.5; }
         .rj-dp .react-datepicker__input-container input:focus { border-color: ${MF_GOLD}; box-shadow: 0 0 0 3px rgba(176,143,85,0.12); }
         .rj-dp.dp-error .react-datepicker__input-container input { border-color: #c0392b; }
         .rj-dp .react-datepicker-popper { z-index: 10000; }
         .rj-dp .react-datepicker-wrapper, .rj-dp .react-datepicker__input-container { display: block; width: 100%; }
         .rj-dp .react-datepicker__input-container input::placeholder { color: #bbb; font-size: 0.82rem; }
+        /* --- Combined date + time popup ------------------------------------ */
+        .rj-dtp-pop {
+          position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 10000;
+          background: #fff; border: 1px solid #EAE7E1; border-radius: 16px;
+          box-shadow: 0 18px 50px rgba(28,49,99,0.16); overflow: hidden;
+        }
+        .rj-dtp-cols { display: flex; align-items: stretch; }
+        /* Calendar keeps its own look; strip the card chrome it carries when
+           standalone so it sits flush inside this shared popup. */
+        .rj-dtp-cal .react-datepicker { border: none; box-shadow: none; border-radius: 0; }
+        .rj-dtp-times {
+          width: 132px; flex-shrink: 0; overflow-y: auto; max-height: 300px;
+          border-left: 1px solid #EFEDE8; padding: 8px 6px;
+        }
+        .rj-dtp-slot {
+          display: block; width: 100%; padding: 8px 12px; margin-bottom: 2px;
+          border: none; border-radius: 8px; background: transparent;
+          color: ${MF_NAVY}; font-family: inherit; font-size: 0.78rem;
+          text-align: left; cursor: pointer; white-space: nowrap;
+          transition: background 0.15s, color 0.15s;
+        }
+        .rj-dtp-slot:hover { background: #F2F0EC; }
+        .rj-dtp-slot.is-active { background: ${MF_GOLD}; color: #fff; font-weight: 600; }
+        .rj-dtp-slot.is-active:hover { background: ${MF_GOLD}; }
+        .rj-dtp-foot {
+          display: flex; align-items: center; gap: 10px;
+          padding: 12px; border-top: 1px solid #EFEDE8; background: #fff;
+        }
+        .rj-dtp-summary {
+          flex: 1; text-align: center; font-size: 0.75rem; color: ${MF_NAVY};
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rj-dtp-cancel, .rj-dtp-confirm {
+          border-radius: 999px; font-family: inherit; font-size: 0.76rem;
+          font-weight: 600; padding: 9px 18px; cursor: pointer; flex-shrink: 0;
+          transition: background 0.18s, border-color 0.18s, opacity 0.18s;
+        }
+        .rj-dtp-cancel { background: #fff; border: 1px solid ${MF_LINE}; color: ${MF_NAVY}; }
+        .rj-dtp-cancel:hover { border-color: #C8C4BC; background: #FAF9F6; }
+        .rj-dtp-confirm { background: ${MF_NAVY}; border: 1px solid ${MF_NAVY}; color: #fff; }
+        .rj-dtp-confirm:hover { background: #16274F; }
+        .rj-dtp-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+        @media (max-width: 560px) {
+          .rj-dtp-cols { flex-direction: column; }
+          .rj-dtp-times { width: auto; max-height: 150px; border-left: none; border-top: 1px solid #EFEDE8; }
+        }
+
         .mf-split { display: grid; grid-template-columns: 37% 1fr; }
         .mf-aside { position: relative; overflow: hidden; background: #C9C7C4; }
         .mf-aside__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: grayscale(0.28) contrast(1.02); }
@@ -489,18 +641,19 @@ export default function MeetingForm({ open, onClose }: Props) {
                       {errors.mode && <span style={{ fontSize: "0.6rem", color: "#c0392b", fontFamily: "inherit" }}>{errors.mode}</span>}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem", alignItems: "start" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-                        <label style={{ fontSize: "0.66rem", letterSpacing: "0.13em", textTransform: "uppercase", color: errors.date ? "#c0392b" : MF_NAVY_SOFT, fontWeight: 500, fontFamily: "inherit" }}>Preferred Date</label>
-                        <div className={`rj-dp${errors.date ? " dp-error" : ""}`}>
-                          <DatePicker selected={form.date} onChange={(d: Date | null) => { setForm(f => ({ ...f, date: d })); clearErr("date"); }} placeholderText="Select a date" minDate={new Date()} dateFormat="dd MMM yyyy" popperPlacement="top-start" withPortal={false} popperProps={{ strategy: "fixed" }} />
-                        </div>
-                        {errors.date && <span style={{ fontSize: "0.6rem", color: "#c0392b", fontFamily: "inherit" }}>{errors.date}</span>}
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-                        <label style={{ fontSize: "0.66rem", letterSpacing: "0.13em", textTransform: "uppercase", color: focusedId === "time" ? MF_GOLD : MF_NAVY_SOFT, fontWeight: 500, fontFamily: "inherit", transition: "color 0.18s" }}>Preferred Time</label>
-                        <TimePicker value={form.time} onChange={v => setForm(f => ({ ...f, time: v }))} focused={focusedId === "time"} onFocus={() => setFocusedId("time")} onBlur={() => setFocusedId(null)} />
-                      </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+                      <label style={{ fontSize: "0.66rem", letterSpacing: "0.13em", textTransform: "uppercase", color: errors.date || errors.time ? "#c0392b" : MF_NAVY_SOFT, fontWeight: 500, fontFamily: "inherit" }}>Preferred Date &amp; Time</label>
+                      <DateTimePicker
+                        date={form.date}
+                        time={form.time}
+                        error={!!(errors.date || errors.time)}
+                        onChange={(d, t) => {
+                          setForm(f => ({ ...f, date: d, time: t }));
+                          if (d) clearErr("date");
+                          if (t) clearErr("time");
+                        }}
+                      />
+                      {(errors.date || errors.time) && <span style={{ fontSize: "0.6rem", color: "#c0392b", fontFamily: "inherit" }}>{errors.date || errors.time}</span>}
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>

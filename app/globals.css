@@ -278,7 +278,7 @@ html.lenis, html.lenis body { height: auto; }
   .hero-name-wrap { width: clamp(46rem, 36vw, 72rem) !important; }
 
   /* Institution grid rows */
-  .institution-grid { grid-template-rows: 220px 300px 220px !important; }
+  .institution-grid { grid-template-rows: 220px 300px 220px 280px !important; }
 
   /* Logo sizes */
   .logo-cell-img        { max-height: 80px  !important; max-width: 260px !important; }
@@ -287,6 +287,29 @@ html.lenis, html.lenis body { height: auto; }
   /* Card widths for scroll tracks */
   .reel-card    { width: clamp(320px, 20vw, 460px) !important; }
   .linkedin-card { width: clamp(360px, 22vw, 520px) !important; }
+}
+
+/* ─── Institution logo links ─────────────────────────────────────── */
+/* Logos sit at rest slightly muted; hovering lifts them to full strength
+   so the cell reads as clickable without adding visible chrome. */
+.logo-cell-link {
+  text-decoration: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 0.82;
+}
+.logo-cell-link:hover,
+.logo-cell-link:focus-visible {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+.logo-cell-link:focus-visible {
+  outline: 1px solid var(--muted);
+  outline-offset: -6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-cell-link { transition: none; }
+  .logo-cell-link:hover,
+  .logo-cell-link:focus-visible { transform: none; }
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────── */
